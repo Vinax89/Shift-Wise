@@ -107,3 +107,22 @@ export const calendarEvents: CalendarEvent[] = [
   { date: addDays(now, 14), title: 'Payday', type: 'payday' },
   { date: addDays(now, 15), title: 'Rent Due', type: 'bill' },
 ];
+
+export const trendData = {
+  grossIncome: [
+    { label: '1', value: 2100 }, { label: '2', value: 2450 }, { label: '3', value: 2300 },
+    { label: '4', value: 2800 }, { label: '5', value: 2600 }, { label: '6', value: 3100 },
+  ],
+  taxes: [
+    { label: '1', value: 462 }, { label: '2', value: 539 }, { label: '3', value: 506 },
+    { label: '4', value: 616 }, { label: '5', value: 572 }, { label: '6', value: 682 },
+  ],
+  spending: [
+    { label: '1', value: 1500 }, { label: '2', value: 1650 }, { label: '3', value: 1580 },
+    { label: '4', value: 1720 }, { label: '5', value: 1800 }, { label: '6', value: 1750 },
+  ],
+  netIncome: [
+    { label: '1', value: 138 }, { label: '2', value: 261 }, { label: '3', value: 214 },
+    { label: '4', value: 464 }, { label: '5', value: 228 }, { label: '6', value: 668 },
+  ],
+};

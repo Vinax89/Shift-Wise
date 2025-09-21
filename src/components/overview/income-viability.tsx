@@ -2,7 +2,8 @@
 
 import { formatCurrency } from '@/lib/utils';
 import { TrendingDown, TrendingUp, Wallet } from 'lucide-react';
-import { transactions } from '@/lib/data';
+import { transactions, trendData } from '@/lib/data';
+import { MiniTrend } from './mini-trend';
 
 export function IncomeViability() {
   const grossIncome = transactions
@@ -23,24 +24,32 @@ export function IncomeViability() {
       value: grossIncome,
       icon: TrendingUp,
       color: 'text-green-500',
+      chartData: trendData.grossIncome,
+      chartColor: 'hsl(var(--chart-2))'
     },
     {
       label: 'Estimated Taxes',
       value: -estimatedTaxes,
       icon: TrendingDown,
       color: 'text-red-500',
+      chartData: trendData.taxes,
+      chartColor: 'hsl(var(--chart-5))'
     },
     {
       label: 'Cost of Living',
       value: -costOfLiving,
       icon: TrendingDown,
       color: 'text-red-500',
+      chartData: trendData.spending,
+      chartColor: 'hsl(var(--chart-1))'
     },
     {
       label: 'Net Income',
       value: netIncome,
       icon: Wallet,
       color: 'text-blue-500',
+      chartData: trendData.netIncome,
+      chartColor: 'hsl(var(--chart-4))'
     },
   ];
 
@@ -51,12 +60,13 @@ export function IncomeViability() {
           <div className={`p-3 rounded-full bg-muted ${item.color}`}>
             <item.icon className="h-6 w-6" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-muted-foreground">{item.label}</p>
             <p className="text-2xl font-bold font-headline">
               {formatCurrency(item.value)}
             </p>
           </div>
+          <MiniTrend data={item.chartData} color={item.chartColor} />
         </div>
       ))}
     </div>
