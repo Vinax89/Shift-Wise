@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { IncomeExpenseChart } from '@/components/overview/income-expense-chart';
+import { CashFlowTrend } from '@/components/overview/cash-flow-trend';
 import { CategorySpendChart } from '@/components/overview/category-spend-chart';
 import { SavingsGoalsProgress } from '@/components/overview/savings-goals-progress';
 import { RecentTransactions } from '@/components/overview/recent-transactions';
@@ -37,7 +37,7 @@ export default function OverviewPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <IncomeExpenseChart />
+            <CashFlowTrend />
           </CardContent>
         </Card>
       </div>
