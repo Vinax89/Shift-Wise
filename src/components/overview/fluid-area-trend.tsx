@@ -10,6 +10,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { formatCurrency } from '@/lib/utils';
 
 // --- Types ---
 export type TrendPoint = {
@@ -163,7 +164,7 @@ export function FluidAreaTrend({
             }}
             labelStyle={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}
             formatter={(v: number) =>
-              [Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(v), undefined]
+              [formatCurrency(v), undefined]
             }
           />
 

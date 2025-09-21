@@ -48,6 +48,6 @@ export function CashFlowTrend() {
   }, []);
 
   return (
-      <FluidAreaTrend data={chartData} aspect={21/9} minHeight={300} />
+      <FluidAreaTrend data={chartData} aspect={21/9} minHeight={300} stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" />
   );
 }
