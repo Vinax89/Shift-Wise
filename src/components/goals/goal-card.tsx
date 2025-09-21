@@ -14,7 +14,7 @@ export function GoalCard({ goal }: GoalCardProps) {
   const daysLeft = differenceInDays(new Date(goal.deadline), new Date());
 
   return (
-    <Card>
+    <Card className="h-full transition-all hover:shadow-md hover:-translate-y-1">
       <CardHeader className="flex flex-row items-center gap-4 space-y-0">
         <Target className="w-8 h-8 text-primary" />
         <div>

@@ -2,8 +2,9 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { GoalCard } from '@/components/goals/goal-card';
 import { goals } from '@/lib/data';
+import Link from 'next/link';
 
-export default function GoalsPage() {
+export default function GoalsListPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -21,7 +22,9 @@ export default function GoalsPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {goals.map((goal) => (
-          <GoalCard key={goal.id} goal={goal} />
+          <Link href={`/goals/${goal.id}`} key={goal.id}>
+            <GoalCard goal={goal} />
+          </Link>
         ))}
       </div>
     </div>
