@@ -37,6 +37,12 @@
     --sidebar-accent: 240 50% 90%;
     --sidebar-accent-foreground: 240 10% 10%;
     --sidebar-ring: 180 80% 30%;
+
+    --motion-micro: 140ms;
+    --motion-comp: 200ms;
+    --motion-page: 260ms;
+    --curve-enter: cubic-bezier(0.2,0,0,1);
+    --curve-exit: cubic-bezier(0.4,0,0.2,1);
   }
 
   .dark {
