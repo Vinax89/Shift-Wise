@@ -22,6 +22,26 @@ export const metadata: Metadata = {
     'Finally, a budgeting app designed for shift workers. Align your budget with your paychecks, track your fluctuating income, and build a stable financial future.',
 };
 
+const speculationRules = {
+  prefetch: [
+    {
+      source: 'document',
+      where: {
+        selector_matches:
+          ":where(a[href^='/transactions'],a[href^='/budgets'],a[href^='/calendar'],a[href^='/goals'])",
+      },
+      eagerness: 'moderate',
+    },
+  ],
+  prerender: [
+    {
+      source: 'list',
+      urls: ['/overview'],
+      eagerness: 'conservative',
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +49,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="speculationrules"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(speculationRules) }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${nunitoSans.variable} font-body antialiased`}
       >
