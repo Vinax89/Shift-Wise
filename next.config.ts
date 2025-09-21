@@ -52,6 +52,14 @@ const nextConfig: NextConfig = {
             value:
               '<https://www.gstatic.com>; rel=preconnect, <https://www.googleapis.com>; rel=preconnect, <https://cdn.plaid.com>; rel=preconnect',
           },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless',
+          }
         ],
       },
     ];
