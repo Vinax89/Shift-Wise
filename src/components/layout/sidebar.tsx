@@ -41,8 +41,15 @@ export function AppSidebar({ isMobile = false }) {
     <>
       <SidebarHeader>
         <div className="flex items-center gap-2 p-2">
-          <Wallet className="h-8 w-8 text-primary" />
-          <h2 className="text-xl font-bold tracking-tighter font-headline">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-8 w-8 text-accent"
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-9h4v2h-4v-2zm-4 4h12v2H8v-2z" />
+          </svg>
+          <h2 className="text-xl font-bold tracking-tighter font-headline text-foreground">
             ShiftWise
           </h2>
         </div>

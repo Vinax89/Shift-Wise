@@ -6,11 +6,13 @@ import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
   variable: '--font-body',
 });
 
 const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
+  display: 'swap',
   variable: '--font-headline',
 });
 
