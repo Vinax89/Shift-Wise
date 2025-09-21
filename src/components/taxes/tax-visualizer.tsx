@@ -100,18 +100,18 @@ export function TaxVisualizer() {
                 <CardHeader>
                     <CardTitle className="font-headline">Tax Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                     <div className="flex justify-between"><span>Federal Tax:</span> <span className="font-medium">{formatCurrency(result.federalTax)}</span></div>
                     <div className="flex justify-between"><span>State Tax:</span> <span className="font-medium">{formatCurrency(result.stateTax)}</span></div>
                     <div className="flex justify-between"><span>Local Tax:</span> <span className="font-medium">{formatCurrency(result.localTax)}</span></div>
-                    <div className="flex justify-between pt-2 border-t font-bold"><span>Total Tax:</span> <span>{formatCurrency(result.federalTax + result.stateTax + result.localTax)}</span></div>
+                    <div className="flex justify-between pt-4 border-t font-bold"><span>Total Tax:</span> <span>{formatCurrency(result.federalTax + result.stateTax + result.localTax)}</span></div>
                 </CardContent>
             </Card>
             <Card className="md:col-span-2">
                  <CardHeader>
                     <CardTitle className="font-headline">Visual Comparison</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                     <ChartContainer config={chartConfig} className="w-full h-52">
                         <BarChart data={chartData} layout="vertical" accessibilityLayer>
                             <XAxis type="number" hide />
@@ -125,7 +125,7 @@ export function TaxVisualizer() {
                  <CardHeader>
                     <CardTitle className="font-headline">AI Explanation</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                     <p className="text-sm text-muted-foreground leading-relaxed">{result.taxBurdenExplanation}</p>
                 </CardContent>
             </Card>
