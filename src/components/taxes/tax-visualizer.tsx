@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +20,7 @@ import type { TaxBurdenVisualizationOutput } from '@/ai/flows/tax-burden-visuali
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
-import { Bar, BarChart, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
 
 const formSchema = z.object({
@@ -31,6 +31,20 @@ export function TaxVisualizer() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<TaxBurdenVisualizationOutput | null>(null);
   const { toast } = useToast();
+  const [chartColors, setChartColors] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const color = (v: string) => `hsl(${css(v)})`;
+
+    setChartColors([
+      color('--chart-1'),
+      color('--chart-2'),
+      color('--chart-3'),
+    ]);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,9 +72,9 @@ export function TaxVisualizer() {
   }
 
   const chartData = result ? [
-    { name: 'Federal', tax: result.federalTax, fill: 'hsl(var(--chart-1))' },
-    { name: 'State', tax: result.stateTax, fill: 'hsl(var(--chart-2))' },
-    { name: 'Local', tax: result.localTax, fill: 'hsl(var(--chart-3))' },
+    { name: 'Federal', tax: result.federalTax, fill: chartColors[0] },
+    { name: 'State', tax: result.stateTax, fill: chartColors[1] },
+    { name: 'Local', tax: result.localTax, fill: chartColors[2] },
   ] : [];
 
   const chartConfig = {
@@ -110,12 +124,14 @@ export function TaxVisualizer() {
                 </CardHeader>
                 <CardContent className="pt-6">
                     <ChartContainer config={chartConfig} className="w-full h-52">
-                        <BarChart data={chartData} layout="vertical" accessibilityLayer>
-                            <XAxis type="number" hide tick={{fill: 'hsl(var(--chart-axis))'}} axisLine={{stroke: 'hsl(var(--chart-axis-weak))'}} />
-                            <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{fill: 'hsl(var(--chart-axis))'}} />
-                            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} cursor={{fill: 'hsl(var(--muted))'}} />
-                            <Bar dataKey="tax" radius={4} layout="vertical" />
-                        </BarChart>
+                        <ResponsiveContainer>
+                            <BarChart data={chartData} layout="vertical" accessibilityLayer>
+                                <XAxis type="number" hide tick={{fill: 'hsl(var(--chart-axis))'}} axisLine={{stroke: 'hsl(var(--chart-axis-weak))'}} />
+                                <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{fill: 'hsl(var(--chart-axis))'}} />
+                                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} cursor={{fill: 'hsl(var(--muted))'}} />
+                                <Bar dataKey="tax" radius={4} layout="vertical" />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </ChartContainer>
                 </CardContent>
             </Card>

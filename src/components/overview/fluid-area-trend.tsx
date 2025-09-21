@@ -2,15 +2,10 @@
 
 import * as React from 'react';
 import {
-  AreaChart,
-  Area,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '../ui/skeleton';
 
 // --- Types ---
 export type TrendPoint = {
@@ -21,10 +16,10 @@ export type TrendPoint = {
 type FluidChartProps = {
   data: TrendPoint[];
   className?: string;
-  aspect?: number;     // width / height, e.g. 16/9
-  minHeight?: number;  // px fallback before first measure
-  stroke?: string;     // CSS color for line
-  fill?: string;       // CSS color for area base
+  aspect?: number;
+  height?: number;
+  stroke?: string;
+  fill?: string;
   showGrid?: boolean;
 };
 
@@ -41,54 +36,22 @@ function usePrefersReducedMotion() {
   return prefers;
 }
 
-function useContainerSize<T extends HTMLElement>() {
-  const ref = React.useRef<T | null>(null);
-  const [size, setSize] = React.useState({ width: 0, height: 0 });
-
-  React.useEffect(() => {
-    if (!ref.current) return;
-    let raf = 0;
-    const ro = new ResizeObserver(([entry]) => {
-      // rAF to avoid layout thrash during continuous resizing
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const { width, height } = entry.contentRect;
-        setSize((prev) =>
-          prev.width === width && prev.height === height
-            ? prev
-            : { width: Math.round(width), height: Math.round(height) }
-        );
-      });
-    });
-    ro.observe(ref.current);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
-  }, []);
-
-  return { ref, ...size };
-}
-
 // --- Component ---
 export function FluidAreaTrend({
   data,
   className,
   aspect = 16 / 9,
-  minHeight = 220,
+  height = 220,
   stroke = 'hsl(var(--chart-1))',
   fill = 'hsl(var(--chart-1))',
   showGrid = true,
 }: FluidChartProps) {
-  const { ref, width } = useContainerSize<HTMLDivElement>();
-  const height = React.useMemo(
-    () => Math.max(minHeight, width ? Math.round(width / aspect) : minHeight),
-    [width, aspect, minHeight]
-  );
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => setIsClient(true), []);
+
   const prefersReducedMotion = usePrefersReducedMotion();
   const gradId = React.useId();
 
-  // Normalize x labels (keep it lightweight)
   const chartData = React.useMemo(
     () =>
       data.map((d) => ({
@@ -100,29 +63,24 @@ export function FluidAreaTrend({
       })),
     [data]
   );
+  
+  if (!isClient) {
+    return <Skeleton className="w-full h-full" style={{height}} />
+  }
 
   return (
     <div
-      ref={ref}
-      className={['w-full', className]
-        .filter(Boolean)
-        .join(' ')}
-      style={{ minHeight }}
+      className={['w-full', className].filter(Boolean).join(' ')}
+      style={{ height }}
       aria-label="Trend chart"
       role="img"
     >
-      {width <= 0 ? (
-        // Skeleton while measuring
-        <div className="h-full w-full animate-pulse rounded-xl bg-muted" style={{ height }}/>
-      ) : (
+      <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          width={width}
-          height={height}
           data={chartData}
           margin={{ top: 8, right: 0, bottom: 0, left: 0 }}
         >
           <defs>
-            {/* Soft gradient that respects theme color */}
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={fill} stopOpacity={0.28} />
               <stop offset="85%" stopColor={fill} stopOpacity={0.04} />
@@ -157,15 +115,14 @@ export function FluidAreaTrend({
           <Tooltip
             cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1.5, strokeDasharray: '4 4' }}
             contentStyle={{
-              borderRadius: 12,
+              background: 'hsl(var(--chart-bg))',
               border: '1px solid hsl(var(--border))',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              background: 'hsl(var(--background))',
+              color: 'hsl(var(--chart-fg))',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 6px -1px hsl(var(--shadow)/0.1), 0 2px 4px -2px hsl(var(--shadow)/0.1)'
             }}
-            labelStyle={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}
-            formatter={(v: number) =>
-              [formatCurrency(v), undefined]
-            }
+            labelStyle={{ color: 'hsl(var(--chart-fg))', fontWeight: 'bold' }}
+            formatter={(v: number) => [formatCurrency(v), undefined]}
           />
 
           <Area
@@ -179,7 +136,7 @@ export function FluidAreaTrend({
             dot={false}
           />
         </AreaChart>
-      )}
+      </ResponsiveContainer>
     </div>
   );
 }

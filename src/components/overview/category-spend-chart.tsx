@@ -9,17 +9,27 @@ import {
 } from '@/components/ui/chart';
 import { Pie, PieChart, Cell } from 'recharts';
 import { transactions } from '@/lib/data';
-import { useMemo } from 'react';
-
-const chartColors = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+import { useMemo, useState, useEffect } from 'react';
 
 export function CategorySpendChart() {
+  const [chartColors, setChartColors] = useState<string[]>([]);
+   const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const color = (v: string) => `hsl(${css(v)})`;
+
+    setChartColors([
+      color('--chart-1'),
+      color('--chart-2'),
+      color('--chart-3'),
+      color('--chart-4'),
+      color('--chart-5'),
+    ]);
+  }, []);
+
+
   const chartData = useMemo(() => {
     const categoryTotals = transactions
       .filter((t) => t.type === 'expense')
@@ -40,6 +50,7 @@ export function CategorySpendChart() {
   }, []);
   
   const chartConfig = useMemo(() => {
+    if (!isClient) return {};
     return chartData.reduce((acc, data, index) => {
       acc[data.name] = {
         label: data.name,
@@ -47,7 +58,11 @@ export function CategorySpendChart() {
       };
       return acc;
     }, {} as any);
-  }, [chartData]);
+  }, [chartData, isClient, chartColors]);
+
+  if (!isClient) {
+      return <div className="w-full h-80 animate-pulse rounded-lg bg-muted" />;
+  }
 
   return (
     <div className="w-full h-80">
@@ -57,6 +72,7 @@ export function CategorySpendChart() {
       >
         <PieChart>
           <ChartTooltip
+            cursor={false}
             content={<ChartTooltipContent nameKey="value" hideLabel />}
           />
           <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="60%">
