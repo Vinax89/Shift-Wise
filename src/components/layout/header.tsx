@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { AppSidebar } from './sidebar';
+import ThemeSwitcher from '@/components/theme/ThemeSwitcher';
 
 const pathToTitle: { [key: string]: string } = {
   '/overview': 'Overview',
@@ -87,6 +88,10 @@ export function AppHeader() {
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <div className="p-2">
+             <ThemeSwitcher />
+          </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
             <Coins className="mr-2 h-4 w-4" />

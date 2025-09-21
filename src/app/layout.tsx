@@ -3,6 +3,7 @@ import { Inter, Nunito_Sans } from 'next/font/google';
 import './globals.css';
 import { AppShell } from '@/components/layout/app-shell';
 import { Toaster } from '@/components/ui/toaster';
+import ThemeProvider from '@/app/providers/theme-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -56,10 +57,13 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${nunitoSans.variable} font-body antialiased`}
+        className={`${inter.variable} ${nunitoSans.variable} font-body antialiased min-h-screen bg-background text-foreground`}
+        data-density="comfy"
       >
-        <AppShell>{children}</AppShell>
-        <Toaster />
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
