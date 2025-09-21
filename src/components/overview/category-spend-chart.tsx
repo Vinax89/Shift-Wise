@@ -10,6 +10,7 @@ import {
 import { Pie, PieChart, Cell } from 'recharts';
 import { transactions } from '@/lib/data';
 import { useMemo, useState, useEffect } from 'react';
+import { Skeleton } from '../ui/skeleton';
 
 export function CategorySpendChart() {
   const [chartColors, setChartColors] = useState<string[]>([]);
@@ -61,10 +62,17 @@ export function CategorySpendChart() {
   }, [chartData, isClient, chartColors]);
 
   if (!isClient) {
-      return <div className="w-full h-80 animate-pulse rounded-lg bg-muted" />;
+      return (
+        <div>
+            <div className="text-sm text-muted-foreground mb-2">Spending by Category</div>
+            <Skeleton className="w-full h-80" />
+        </div>
+      );
   }
 
   return (
+    <>
+    <div className="text-sm text-muted-foreground mb-2">Spending by Category</div>
     <div className="w-full h-80">
       <ChartContainer
         config={chartConfig}
@@ -90,5 +98,6 @@ export function CategorySpendChart() {
         </PieChart>
       </ChartContainer>
     </div>
+    </>
   );
 }

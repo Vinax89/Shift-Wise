@@ -40,6 +40,7 @@ export function CashFlowTrend() {
           if (n > 1000) return `${formatCurrency(n/1000)}k`;
           return formatCurrency(n);
       }}
+      title="Cash Flow"
     />
   );
 }

@@ -28,32 +28,12 @@ export default function OverviewPage() {
         </Card>
       </div>
       
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Cash Flow</CardTitle>
-            <CardDescription>
-              Your income and expenses over the last 30 days.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CashFlowTrend />
-          </CardContent>
-        </Card>
+      <div className="lg:col-span-2 glass rounded-2xl p-6">
+        <CashFlowTrend />
       </div>
 
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Spending by Category</CardTitle>
-            <CardDescription>
-              How you're spending your money this month.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CategorySpendChart />
-          </CardContent>
-        </Card>
+      <div className="lg:col-span-2 glass rounded-2xl p-6">
+        <CategorySpendChart />
       </div>
       
       <div className="lg:col-span-4">
