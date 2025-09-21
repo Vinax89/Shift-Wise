@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Bar, BarChart, XAxis, YAxis } from 'recharts';
-import { ChartContainer } from '../ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
 
 const formSchema = z.object({
   zipCode: z.string().length(5, 'ZIP code must be 5 digits.').regex(/^\d+$/, 'ZIP code must be numeric.'),
@@ -58,16 +58,13 @@ export function TaxVisualizer() {
   }
 
   const chartData = result ? [
-    { name: 'Federal', tax: result.federalTax, fill: 'var(--color-federal)' },
-    { name: 'State', tax: result.stateTax, fill: 'var(--color-state)' },
-    { name: 'Local', tax: result.localTax, fill: 'var(--color-local)' },
+    { name: 'Federal', tax: result.federalTax, fill: 'hsl(var(--chart-1))' },
+    { name: 'State', tax: result.stateTax, fill: 'hsl(var(--chart-2))' },
+    { name: 'Local', tax: result.localTax, fill: 'hsl(var(--chart-3))' },
   ] : [];
 
   const chartConfig = {
-      tax: { label: "Tax" },
-      federal: { label: "Federal", color: "hsl(var(--chart-1))" },
-      state: { label: "State", color: "hsl(var(--chart-2))" },
-      local: { label: "Local", color: "hsl(var(--chart-3))" },
+      tax: { label: "Tax", color: "hsl(var(--chart-1))" },
   }
 
   return (
@@ -114,8 +111,9 @@ export function TaxVisualizer() {
                 <CardContent className="pt-6">
                     <ChartContainer config={chartConfig} className="w-full h-52">
                         <BarChart data={chartData} layout="vertical" accessibilityLayer>
-                            <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} />
+                            <XAxis type="number" hide tick={{fill: 'hsl(var(--chart-axis))'}} axisLine={{stroke: 'hsl(var(--chart-axis-weak))'}} />
+                            <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tick={{fill: 'hsl(var(--chart-axis))'}} />
+                            <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} cursor={{fill: 'hsl(var(--muted))'}} />
                             <Bar dataKey="tax" radius={4} layout="vertical" />
                         </BarChart>
                     </ChartContainer>

@@ -131,7 +131,7 @@ export function FluidAreaTrend({
           </defs>
 
           {showGrid && (
-            <CartesianGrid vertical={false} strokeOpacity={0.15} strokeDasharray="4 4"/>
+            <CartesianGrid vertical={false} stroke={`hsl(var(--chart-grid) / 0.35)`} strokeDasharray="4 4"/>
           )}
 
           <XAxis
@@ -141,7 +141,7 @@ export function FluidAreaTrend({
             tickLine={false}
             minTickGap={32}
             fontSize={12}
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: 'hsl(var(--chart-axis))' }}
           />
           <YAxis
             dataKey="y"
@@ -150,7 +150,7 @@ export function FluidAreaTrend({
             tickLine={false}
             tickMargin={8}
             fontSize={12}
-            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fill: 'hsl(var(--chart-axis))' }}
             tickFormatter={(v) => Intl.NumberFormat(undefined, { notation: 'compact' }).format(v as number)}
           />
 
