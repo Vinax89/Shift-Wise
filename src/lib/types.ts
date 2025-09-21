@@ -96,3 +96,47 @@ export type Subscription = {
     status: 'active' | 'canceled';
     cancelAt?: number | null;
 };
+
+export type BnplPlan = {
+  id: string;
+  provider:
+    | 'unknown'
+    | 'affirm'
+    | 'klarna'
+    | 'afterpay'
+    | 'paypal'
+    | 'sezzle'
+    | 'shop'
+    | 'zip';
+  purchaseTxId: string;
+  purchaseAmount: number;
+  fee: number;
+  currency: 'USD';
+  schedule: {
+    due: string;
+    amount: number;
+    paidTxId: string | null;
+  }[];
+  biweekly: boolean;
+  status: 'active' | 'paid' | 'late' | 'canceled';
+  apr: {
+    effective: number;
+    method: 'irr' | 'stated' | 'flat-fee';
+  };
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type Debt = {
+  id: string;
+  name: string;
+  type: 'credit' | 'loan';
+  apr: number;
+  statementCycleDays: number;
+  minPayRule: {
+    percent: number;
+    floor: number;
+  };
+  balance: number;
+  asOf: string;
+};
