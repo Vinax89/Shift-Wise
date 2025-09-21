@@ -33,6 +33,11 @@
   --chart-3: 262 83% 58%;
   --chart-4: 38 92% 50%;
   --chart-5: 0 72% 51%;
+  --glass-bg: hsl(var(--card) / 0.6);
+  --glass-border: hsl(var(--border) / 0.5);
+  --glass-highlight: hsl(var(--fg) / 0.06);
+  --glass-shadow: 240 10% 20%;
+  --glass-noise: rgba(255,255,255,0.05);
 }
 
 .dark {
@@ -64,6 +69,11 @@
   --chart-3: 262 83% 65%;
   --chart-4: 38 92% 56%;
   --chart-5: 0 72% 60%;
+  --glass-bg: hsl(var(--card) / 0.25);
+  --glass-border: hsl(var(--border) / 0.45);
+  --glass-highlight: hsl(var(--fg) / 0.08);
+  --glass-shadow: 240 10% 5%;
+  --glass-noise: rgba(255,255,255,0.03);
 }
 
 /* High-contrast theme favors near-AAA text contrast */
@@ -96,6 +106,9 @@
   --chart-3: 270 100% 35%;
   --chart-4: 40 100% 35%;
   --chart-5: 0 100% 35%;
+  --glass-bg: hsl(var(--card));
+  --glass-border: hsl(var(--border));
+  --glass-noise: transparent;
 }
 
 @layer base {
