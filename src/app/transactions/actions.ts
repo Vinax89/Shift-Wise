@@ -12,6 +12,12 @@ import {
   CategorizeTransactionOutput
 } from '@/ai/flows/categorize-transactions-ai';
 
+import {
+  roundUpTransaction as roundUpTransactionAI,
+  RoundUpTransactionInput,
+  RoundUpTransactionOutput
+} from '@/ai/flows/round-up-transaction';
+
 export async function scanReceipt(input: ScanReceiptAndCategorizeExpensesInput): Promise<ScanReceiptAndCategorizeExpensesOutput> {
   try {
     const result = await scanReceiptAndCategorizeExpenses(input);
@@ -29,5 +35,15 @@ export async function categorizeTransaction(input: CategorizeTransactionInput): 
   } catch (error) {
     console.error("Error in categorizeTransaction server action:", error);
     throw new Error("Failed to categorize transaction.");
+  }
+}
+
+export async function roundUpTransaction(input: RoundUpTransactionInput): Promise<RoundUpTransactionOutput> {
+  try {
+    const result = await roundUpTransactionAI(input);
+    return result;
+  } catch (error) {
+    console.error("Error in roundUpTransaction server action:", error);
+    throw new Error("Failed to round up transaction.");
   }
 }

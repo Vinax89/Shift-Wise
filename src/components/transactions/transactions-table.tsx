@@ -9,13 +9,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { transactions as initialTransactions } from '@/lib/data';
+import { transactions as initialTransactions, goals } from '@/lib/data';
 import type { Transaction } from '@/lib/types';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { categorizeTransaction } from '@/app/transactions/actions';
-import { Wand2, Loader2 } from 'lucide-react';
+import { categorizeTransaction, roundUpTransaction } from '@/app/transactions/actions';
+import { Wand2, Loader2, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const categoryColorMap: { [key: string]: string } = {
@@ -31,6 +31,7 @@ const categoryColorMap: { [key: string]: string } = {
 export function TransactionsTable() {
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [categorizingId, setCategorizingId] = useState<string | null>(null);
+  const [roundUpId, setRoundUpId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleCategorize = async (transaction: Transaction) => {
@@ -61,6 +62,46 @@ export function TransactionsTable() {
       setCategorizingId(null);
     }
   };
+
+  const handleRoundUp = async (transaction: Transaction) => {
+    if (transaction.type === 'income') {
+      toast({ variant: 'destructive', title: 'Invalid Transaction', description: 'Cannot round-up an income transaction.' });
+      return;
+    }
+
+    // Per SPEC-1.1, targets the highest-priority active goal
+    const highestPriorityGoal = goals.sort((a,b) => a.id.localeCompare(b.id))[0]; // Simplified priority
+
+    setRoundUpId(transaction.id);
+    try {
+      const result = await roundUpTransaction({
+        transactionId: transaction.id,
+        transactionAmount: transaction.amount,
+        goalId: highestPriorityGoal.id
+      });
+
+      if (result.roundUpAmount > 0) {
+        toast({
+          title: "Transaction Rounded Up!",
+          description: `${formatCurrency(result.roundUpAmount)} was added to your "${highestPriorityGoal.name}" goal.`
+        });
+      } else {
+        toast({
+          title: "No Round-Up Applied",
+          description: "This transaction amount is a whole number."
+        });
+      }
+    } catch (error) {
+      console.error("Round-up failed:", error);
+      toast({
+        variant: 'destructive',
+        title: "Round-up Failed",
+        description: "Could not apply round-up to the transaction."
+      })
+    } finally {
+      setRoundUpId(null);
+    }
+  };
   
   return (
     <Table>
@@ -70,6 +111,7 @@ export function TransactionsTable() {
           <TableHead className="hidden sm:table-cell">Date</TableHead>
           <TableHead>Category</TableHead>
           <TableHead className="text-right">Amount</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -80,24 +122,12 @@ export function TransactionsTable() {
               {format(new Date(transaction.date), 'MMM d, yyyy')}
             </TableCell>
             <TableCell>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className={cn(categoryColorMap[transaction.category] || categoryColorMap['Uncategorized'])}
-                >
-                  {transaction.category}
-                </Badge>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7"
-                  onClick={() => handleCategorize(transaction)}
-                  disabled={categorizingId === transaction.id}
-                  aria-label="Categorize with AI"
-                >
-                  {categorizingId === transaction.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 text-muted-foreground" />}
-                </Button>
-              </div>
+              <Badge
+                variant="outline"
+                className={cn(categoryColorMap[transaction.category] || categoryColorMap['Uncategorized'])}
+              >
+                {transaction.category}
+              </Badge>
             </TableCell>
             <TableCell
               className={cn(
@@ -106,6 +136,32 @@ export function TransactionsTable() {
               )}
             >
               {formatCurrency(transaction.amount)}
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7"
+                  onClick={() => handleCategorize(transaction)}
+                  disabled={categorizingId === transaction.id || roundUpId === transaction.id}
+                  aria-label="Categorize with AI"
+                >
+                  {categorizingId === transaction.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+                {transaction.type === 'expense' && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7"
+                    onClick={() => handleRoundUp(transaction)}
+                    disabled={roundUpId === transaction.id || categorizingId === transaction.id}
+                    aria-label="Round-up transaction"
+                  >
+                    {roundUpId === transaction.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                )}
+              </div>
             </TableCell>
           </TableRow>
         ))}
