@@ -1,8 +1,6 @@
 import { getHomeTrend } from '@/lib/data/home';
-import dynamic from 'next/dynamic';
 import Visible from '@/components/islands/Visible';
-
-const LineChartIsland = dynamic(() => import('@/components/charts/LineChartIsland'), { ssr: false, loading: () => <div className="h-40 animate-pulse rounded"/> });
+import LineChartIsland from '@/components/charts/LineChartIsland';
 
 export default async function HomePage() {
   const trend = await getHomeTrend();
