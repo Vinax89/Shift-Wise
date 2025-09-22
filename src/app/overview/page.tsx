@@ -1,5 +1,4 @@
 import { getHomeTrend } from '@/lib/data/home';
-import Visible from '@/components/islands/Visible';
 import LineChartIsland from '@/components/charts/LineChartIsland';
 import ChartHost from '@/components/charts/ChartHost.client';
 
@@ -27,7 +26,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-4">
           <ChartHost height={280}>
-            <LineChartIsland data={trend} xKey="month" yKeys={["inflow","outflow"]} height={280}
+            <LineChartIsland data={trend} xKey="month" yKeys={["inflow","outflow"]}
               locale={undefined} yFormatOptions={{ style:'currency', currency:'USD', maximumFractionDigits:0 }} />
           </ChartHost>
         </div>
