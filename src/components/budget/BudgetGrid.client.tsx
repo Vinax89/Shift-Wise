@@ -1,81 +1,78 @@
 'use client';
 import * as React from 'react';
-import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useForm } from 'react-hook-form';
+import { fmtCurrency } from '@/lib/format/number';
+import { store, type BudgetRow } from '@/lib/store';
 
-export type BudgetRow = { id: string; envelope: string; planned: number; spent: number; remaining: number };
-
-export default function BudgetGrid({ rows, onChange }: { rows: BudgetRow[]; onChange?: (r: BudgetRow[]) => void }) {
-  const [data, setData] = React.useState(rows);
-  const cols = React.useMemo<ColumnDef<BudgetRow>[]>(() => [
-    { accessorKey: 'envelope', header: 'Envelope', cell: ctx => <CellText row={ctx.row.original} field='envelope' onEdit={update}/> },
-    { accessorKey: 'planned', header: 'Planned', cell: ctx => <CellNumber row={ctx.row.original} field='planned' onEdit={update}/> },
-    { accessorKey: 'spent', header: 'Spent', cell: ctx => <span className="tabular-nums">{fmt(ctx.row.original.spent)}</span> },
-    { accessorKey: 'remaining', header: 'Remaining', cell: ctx => <strong className={`tabular-nums ${ctx.row.original.remaining<0?'text-danger':'text-success'}`}>{fmt(ctx.row.original.remaining)}</strong> },
-  ], []);
-
-  function recompute(next: BudgetRow[]): BudgetRow[] {
-    return next.map(r => ({ ...r, remaining: Math.round((r.planned - r.spent) * 100) / 100 }));
-  }
-  function update(id: string, patch: Partial<BudgetRow>) {
-    setData(prev => {
-      const next = prev.map(r => r.id===id? { ...r, ...patch } : r);
-      const out = recompute(next);
-      onChange?.(out);
-      return out;
-    });
-  }
-
-  const table = useReactTable({ data, columns: cols, getCoreRowModel: getCoreRowModel() });
+export default function BudgetGrid() {
+  const [rows, setRows] = React.useState<BudgetRow[]>([]);
+  const [busy, setBusy] = React.useState(false);
   const parentRef = React.useRef<HTMLDivElement>(null);
-  const rowVirtualizer = useVirtualizer({ count: table.getRowModel().rows.length, getScrollElement: () => parentRef.current, estimateSize: () => 44, overscan: 8 });
+
+  React.useEffect(() => { store.listBudgets().then(setRows); }, []);
+
+  const virt = useVirtualizer({ count: rows.length, getScrollElement: () => parentRef.current, estimateSize: () => 52, overscan: 6 });
+
+  const save = React.useCallback(async (id: string, patch: Partial<BudgetRow>) => {
+    setBusy(true);
+    setRows(s => s.map(r => r.id===id ? { ...r, ...patch } : r)); // optimistic
+    try { await store.upsertBudget({ id, ...patch }); } finally { setBusy(false); }
+  }, []);
+
+  const totalBudget = rows.reduce((a,r)=>a+r.amount,0);
+  const totalSpent  = rows.reduce((a,r)=>a+r.spent,0);
 
   return (
-    <div className="rounded-2xl border border-border bg-card">
-      <div role="table" aria-label="Budget grid" className="grid grid-cols-4 border-b border-border/70 text-xs text-muted-fg">
-        {table.getHeaderGroups().map(hg => hg.headers.map(h => <div key={h.id} className="px-3 py-2 font-medium">{flexRender(h.column.columnDef.header, h.getContext())}</div>))}
+    <section className="glass rounded-xl p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Budget Planner</h2>
+        <span className="text-xs text-muted">{busy? 'Saving…' : 'Ready'}</span>
       </div>
-      <div ref={parentRef} className="h-[60vh] overflow-auto [content-visibility:auto] [contain-intrinsic-size:44px]">
-        <div style={{ height: rowVirtualizer.getTotalSize() }} className="relative">
-          {rowVirtualizer.getVirtualItems().map(v => {
-            const row = table.getRowModel().rows[v.index];
+      <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 rounded-lg bg-black/5 p-2 text-xs font-medium dark:bg-white/5">
+        <div>Category</div><div>Period</div><div>Planned</div><div>Spent</div><div>Rollover</div>
+      </div>
+      <div ref={parentRef} className="h-[360px] overflow-auto">
+        <div style={{ height: virt.getTotalSize(), position: 'relative' }}>
+          {virt.getVirtualItems().map(v => {
+            const r = rows[v.index];
+            const remain = r.amount - r.spent;
             return (
-              <div key={row.id} className="absolute left-0 right-0 grid grid-cols-4 border-b border-border/60" style={{ transform: `translateY(${v.start}px)`, height: v.size }}>
-                {row.getVisibleCells().map(cell => (
-                  <div key={cell.id} className="px-3 py-2">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </div>
-                ))}
+              <div key={r.id} style={{ position:'absolute', top:0, left:0, width:'100%', transform:`translateY(${v.start}px)` }}
+                   className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-2 border-b border-white/5 px-2 py-2 text-sm">
+                <div className="truncate">{r.category}</div>
+                <select className="rounded bg-transparent px-1 py-1 outline-none ring-1 ring-white/10"
+                        value={r.period} onChange={e=>save(r.id,{period: e.target.value as any})}>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Biweekly</option>
+                  <option value="semimonthly">Semi‑Monthly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                <input type="number" className="w-full rounded bg-transparent px-2 py-1 ring-1 ring-white/10"
+                       value={r.amount} onChange={e=>save(r.id,{amount: Number(e.target.value)})} />
+                <div className={remain<0? 'text-red-400':'text-green-400'}>{fmtCurrency(r.spent)} <span className="text-muted">({fmtCurrency(remain)} left)</span></div>
+                <label className="inline-flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={r.rollover} onChange={e=>save(r.id,{rollover: e.target.checked})} />
+                  <span className="text-muted">Enable</span>
+                </label>
               </div>
             );
           })}
         </div>
       </div>
+      <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+        <Kpi label="Total Planned" value={fmtCurrency(totalBudget)} />
+        <Kpi label="Total Spent" value={fmtCurrency(totalSpent)} />
+        <Kpi label="Remaining" value={fmtCurrency(totalBudget-totalSpent)} />
+      </div>
+    </section>
+  );
+}
+
+function Kpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-black/5 p-2 dark:bg-white/5">
+      <div className="text-xs text-muted">{label}</div>
+      <div className="text-base font-medium">{value}</div>
     </div>
   );
 }
-
-function CellText({ row, field, onEdit }: { row: BudgetGridRow; field: 'envelope'; onEdit: (id:string, patch:any)=>void }){
-  const [editing, setEditing] = React.useState(false);
-  const [value, setValue] = React.useState(row[field]);
-  return editing ? (
-    <input autoFocus value={value} onChange={e=>setValue(e.target.value)} onBlur={()=>{ onEdit(row.id, { [field]: value }); setEditing(false); }} className="w-full rounded border border-border bg-card px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring" />
-  ) : (
-    <button onClick={()=>setEditing(true)} className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring">{value}</button>
-  );
-}
-
-type BudgetGridRow = BudgetRow;
-function CellNumber({ row, field, onEdit }: { row: BudgetGridRow; field: 'planned'; onEdit: (id:string, patch:any)=>void }){
-  const [editing, setEditing] = React.useState(false);
-  const [value, setValue] = React.useState(String(row[field]));
-  function commit(){ const n = Number(value.replace(/[^0-9.-]/g,'')); onEdit(row.id, { [field]: isFinite(n) ? n : row[field] }); setEditing(false); }
-  return editing ? (
-    <input autoFocus inputMode="decimal" value={value} onChange={e=>setValue(e.target.value)} onBlur={commit} onKeyDown={(e)=>{ if(e.key==='Enter') commit(); if(e.key==='Escape') setEditing(false); }} className="w-full rounded border border-border bg-card px-2 py-1 text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-ring" />
-  ) : (
-    <button onClick={()=>setEditing(true)} className="w-full text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-ring">{fmt(row[field])}</button>
-  );
-}
-
-function fmt(n:number){ return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n); }

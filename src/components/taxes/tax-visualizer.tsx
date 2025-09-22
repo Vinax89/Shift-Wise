@@ -16,20 +16,23 @@ import {
 } from '@/components/ui/form';
 import { Loader2, PiggyBank } from 'lucide-react';
 import { getTaxBurden } from '@/app/taxes/actions';
-import type { TaxBurdenVisualizationOutput } from '@/ai/flows/tax-burden-visualization-llm';
+import type { TaxOutput, TaxInput } from '@/ai/flows/tax-burden-visualization-llm';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   zipCode: z.string().length(5, 'ZIP code must be 5 digits.').regex(/^\d+$/, 'ZIP code must be numeric.'),
+  grossAnnual: z.coerce.number().positive("Please enter a valid income."),
+  filingStatus: z.enum(['single', 'married', 'hoh']),
 });
 
 export function TaxVisualizer() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<TaxBurdenVisualizationOutput | null>(null);
+  const [result, setResult] = useState<TaxOutput | null>(null);
   const { toast } = useToast();
   const [chartColors, setChartColors] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
@@ -50,6 +53,8 @@ export function TaxVisualizer() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       zipCode: '',
+      grossAnnual: 50000,
+      filingStatus: 'single',
     },
   });
 
@@ -57,7 +62,13 @@ export function TaxVisualizer() {
     setIsLoading(true);
     setResult(null);
     try {
-      const taxResult = await getTaxBurden(values);
+      const taxInput: TaxInput = {
+        zip: values.zipCode,
+        grossAnnual: values.grossAnnual,
+        filingStatus: values.filingStatus,
+        state: 'CA', // Placeholder, should be derived from ZIP
+      };
+      const taxResult = await getTaxBurden(taxInput);
       setResult(taxResult);
     } catch (error) {
       console.error('Tax visualization failed:', error);
@@ -72,9 +83,9 @@ export function TaxVisualizer() {
   }
 
   const chartData = result ? [
-    { name: 'Federal', tax: result.federalTax, fill: chartColors[0] },
-    { name: 'State', tax: result.stateTax, fill: chartColors[1] },
-    { name: 'Local', tax: result.localTax, fill: chartColors[2] },
+    { name: 'Federal', tax: result.federal, fill: chartColors[0] },
+    { name: 'State', tax: result.state, fill: chartColors[1] },
+    { name: 'Local', tax: result.local, fill: chartColors[2] },
   ] : [];
 
   const chartConfig = {
@@ -84,12 +95,25 @@ export function TaxVisualizer() {
   return (
     <div className="space-y-8">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-3 items-end gap-4">
+          <FormField
+            control={form.control}
+            name="grossAnnual"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Gross Annual Income</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g., 50000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="zipCode"
             render={({ field }) => (
-              <FormItem className="w-full max-w-xs">
+              <FormItem>
                 <FormLabel>ZIP Code</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g., 90210" {...field} />
@@ -98,10 +122,34 @@ export function TaxVisualizer() {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PiggyBank className="mr-2 h-4 w-4" />}
-            Calculate
-          </Button>
+           <FormField
+            control={form.control}
+            name="filingStatus"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Filing Status</FormLabel>
+                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="hoh">Head of Household</SelectItem>
+                    </SelectContent>
+                  </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="md:col-span-3 flex justify-end">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PiggyBank className="mr-2 h-4 w-4" />}
+              Calculate
+            </Button>
+          </div>
         </form>
       </Form>
 
@@ -112,10 +160,10 @@ export function TaxVisualizer() {
                     <CardTitle className="font-headline">Tax Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-6">
-                    <div className="flex justify-between"><span>Federal Tax:</span> <span className="font-medium">{formatCurrency(result.federalTax)}</span></div>
-                    <div className="flex justify-between"><span>State Tax:</span> <span className="font-medium">{formatCurrency(result.stateTax)}</span></div>
-                    <div className="flex justify-between"><span>Local Tax:</span> <span className="font-medium">{formatCurrency(result.localTax)}</span></div>
-                    <div className="flex justify-between pt-4 border-t font-bold"><span>Total Tax:</span> <span>{formatCurrency(result.federalTax + result.stateTax + result.localTax)}</span></div>
+                    <div className="flex justify-between"><span>Federal Tax:</span> <span className="font-medium">{formatCurrency(result.federal)}</span></div>
+                    <div className="flex justify-between"><span>State Tax:</span> <span className="font-medium">{formatCurrency(result.state)}</span></div>
+                    <div className="flex justify-between"><span>Local Tax:</span> <span className="font-medium">{formatCurrency(result.local)}</span></div>
+                    <div className="flex justify-between pt-4 border-t font-bold"><span>Total Tax:</span> <span>{formatCurrency(result.federal + result.state + result.local)}</span></div>
                 </CardContent>
             </Card>
             <Card className="md:col-span-2">
@@ -140,7 +188,7 @@ export function TaxVisualizer() {
                     <CardTitle className="font-headline">AI Explanation</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground leading-relaxed">{result.taxBurdenExplanation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{result.notes}</p>
                 </CardContent>
             </Card>
         </div>

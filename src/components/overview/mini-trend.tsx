@@ -1,39 +1,32 @@
+
 'use client';
+import * as React from 'react';
+import { SmartLineChartPro } from '@/components/charts/ChartKitPro';
+import { GlassCard } from '../glass/GlassCard';
+import { fmtCurrency, fmtInt } from '@/lib/format/number';
 
-import { LineChart, Line, Tooltip, ResponsiveContainer } from "recharts";
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { formatCurrency } from '@/lib/utils';
-import { Skeleton } from "../ui/skeleton";
-import { useState, useEffect } from "react";
+export type Point = { x: string; y: number };
 
-export function MiniTrend({ data, color }: { data: { label: string; value: number }[], color: string }) {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => { setIsClient(true) }, []);
-
-  if (!isClient) {
-    return <Skeleton className="h-10 w-24" />
-  }
-
+export default function MiniTrend({ title="Net Savings", points=[{x:'W1',y:100},{x:'W2',y:80},{x:'W3',y:120},{x:'W4',y:90}], height=120, currency='USD' }:{ title?:string; points?:Point[]; height?:number; currency?:string; }){
+  const latest = points[points.length-1]?.y || 0;
+  const avg = points.reduce((a,p)=>a+p.y,0)/points.length;
+  const change = latest - avg;
+  
   return (
-    <div className="h-10 w-24">
-       <ChartContainer config={{}} className="w-full h-full">
-         <ResponsiveContainer>
-           <LineChart 
-            data={data} 
-            margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
-           >
-              <Tooltip 
-                content={<ChartTooltipContent 
-                    formatter={(value) => formatCurrency(value as number)} 
-                    hideLabel 
-                    hideIndicator
-                />}
-                cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 2, fill: 'transparent' }}
-              />
-              <Line type="monotone" dataKey="value" stroke={color} dot={false} strokeWidth={2} />
-            </LineChart>
-         </ResponsiveContainer>
-       </ChartContainer>
-    </div>
+    <GlassCard title={title}>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-2xl font-bold">{fmtCurrency(latest, currency)}</div>
+          <div className="text-xs text-muted">
+            <span className={change > 0 ? 'text-success' : 'text-danger'}>
+              {change > 0 ? '▲' : '▼'} {fmtCurrency(Math.abs(change), currency)} ({fmtInt((change/avg)*100)}%)
+            </span> vs avg
+          </div>
+        </div>
+        <div className="w-24 h-12 -mr-3 -mt-3">
+          <SmartLineChartPro data={points} xKey="x" yKeys={[ 'y' ]} height={60} />
+        </div>
+      </div>
+    </GlassCard>
   );
 }

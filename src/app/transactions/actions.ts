@@ -17,6 +17,7 @@ import {
   RoundUpTransactionInput,
   RoundUpTransactionOutput
 } from '@/ai/flows/round-up-transaction';
+import { runCategorizer } from '@/lib/genkit/categorizer';
 
 export async function scanReceipt(input: ScanReceiptAndCategorizeExpensesInput): Promise<ScanReceiptAndCategorizeExpensesOutput> {
   try {
@@ -46,4 +47,9 @@ export async function roundUpTransaction(input: RoundUpTransactionInput): Promis
     console.error("Error in roundUpTransaction server action:", error);
     throw new Error("Failed to round up transaction.");
   }
+}
+
+export async function suggestCategories({ tenantId, txns }:{ tenantId: string; txns: { id:string; merchant:string; memo?:string; mcc?:string; amount:number }[] }){
+  const out = await runCategorizer(tenantId, txns);
+  return out; // [{ id, category, confidence }]
 }

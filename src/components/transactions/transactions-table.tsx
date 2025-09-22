@@ -1,171 +1,79 @@
 'use client';
-import { useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { transactions as initialTransactions, goals } from '@/lib/data';
-import type { Transaction } from '@/lib/types';
-import { formatCurrency, cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { categorizeTransaction, roundUpTransaction } from '@/app/transactions/actions';
-import { Wand2, Loader2, DollarSign } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import * as React from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { fmtCurrency } from '@/lib/format/number';
+import { store, type Txn } from '@/lib/store';
+import BulkCategorizeDrawer from '@/components/transactions/BulkCategorizeDrawer.client';
+import ExportCsvButton from '@/components/transactions/ExportCsvButton.client';
 
-const categoryColorMap: { [key: string]: string } = {
-  Groceries: 'bg-green-100 text-green-800 border-green-200',
-  Utilities: 'bg-blue-100 text-blue-800 border-blue-200',
-  Food: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Transportation: 'bg-purple-100 text-purple-800 border-purple-200',
-  Rent: 'bg-red-100 text-red-800 border-red-200',
-  Income: 'bg-teal-100 text-teal-800 border-teal-200',
-  'Uncategorized': 'bg-gray-100 text-gray-800 border-gray-200'
-};
+export default function TransactionsTable() {
+  const [rows, setRows] = React.useState<Txn[]>([]);
+  const [query, setQuery] = React.useState('');
+  const [sel, setSel] = React.useState<Set<string>>(new Set());
+  const [drawer, setDrawer] = React.useState(false);
+  const parentRef = React.useRef<HTMLDivElement>(null);
 
-export function TransactionsTable() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [categorizingId, setCategorizingId] = useState<string | null>(null);
-  const [roundUpId, setRoundUpId] = useState<string | null>(null);
-  const { toast } = useToast();
+  React.useEffect(()=>{ store.listTxns().then(setRows); },[]);
 
-  const handleCategorize = async (transaction: Transaction) => {
-    setCategorizingId(transaction.id);
-    try {
-      const result = await categorizeTransaction({
-        transactionDescription: transaction.merchant,
-        transactionAmount: transaction.amount,
-      });
+  const filtered = React.useMemo(()=>{
+    const q = query.trim().toLowerCase(); if (!q) return rows;
+    return rows.filter(r => r.merchant.toLowerCase().includes(q) || r.category?.toLowerCase().includes(q) || r.date.includes(q));
+  }, [rows, query]);
 
-      setTransactions(prev =>
-        prev.map(t =>
-          t.id === transaction.id ? { ...t, category: result.category } : t
-        )
-      );
-      toast({
-        title: "Transaction Categorized",
-        description: `"${transaction.merchant}" was categorized as ${result.category}.`
-      })
-    } catch (error) {
-      console.error("Categorization failed:", error);
-      toast({
-        variant: 'destructive',
-        title: "Categorization Failed",
-        description: "Could not automatically categorize the transaction."
-      })
-    } finally {
-      setCategorizingId(null);
-    }
+  const virt = useVirtualizer({ count: filtered.length, getScrollElement: () => parentRef.current, estimateSize: () => 52, overscan: 8 });
+
+  const toggle = (id: string) => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const applyCategories = async (updates: { id: string; category: string }[]) => {
+    setRows(s => s.map(r => { const u = updates.find(x=>x.id===r.id); return u? { ...r, category: u.category } : r; }));
+    await store.upsertTxns(updates);
+    setSel(new Set()); setDrawer(false);
   };
 
-  const handleRoundUp = async (transaction: Transaction) => {
-    if (transaction.type === 'income') {
-      toast({ variant: 'destructive', title: 'Invalid Transaction', description: 'Cannot round-up an income transaction.' });
-      return;
-    }
+  const selectedRows = Array.from(sel).map(id => rows.find(r=>r.id===id)!).filter(Boolean);
 
-    // Per SPEC-1.1, targets the highest-priority active goal
-    const highestPriorityGoal = goals.sort((a,b) => a.id.localeCompare(b.id))[0]; // Simplified priority
-
-    setRoundUpId(transaction.id);
-    try {
-      const result = await roundUpTransaction({
-        transactionId: transaction.id,
-        transactionAmount: transaction.amount,
-        goalId: highestPriorityGoal.id
-      });
-
-      if (result.roundUpAmount > 0) {
-        toast({
-          title: "Transaction Rounded Up!",
-          description: `${formatCurrency(result.roundUpAmount)} was added to your "${highestPriorityGoal.name}" goal.`
-        });
-      } else {
-        toast({
-          title: "No Round-Up Applied",
-          description: "This transaction amount is a whole number."
-        });
-      }
-    } catch (error) {
-      console.error("Round-up failed:", error);
-      toast({
-        variant: 'destructive',
-        title: "Round-up Failed",
-        description: "Could not apply round-up to the transaction."
-      })
-    } finally {
-      setRoundUpId(null);
-    }
-  };
-  
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Merchant</TableHead>
-          <TableHead className="hidden sm:table-cell">Date</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {transactions.map((transaction) => (
-          <TableRow key={transaction.id}>
-            <TableCell className="font-medium">{transaction.merchant}</TableCell>
-            <TableCell className="hidden sm:table-cell">
-              {format(new Date(transaction.date), 'MMM d, yyyy')}
-            </TableCell>
-            <TableCell>
-              <Badge
-                variant="outline"
-                className={cn(categoryColorMap[transaction.category] || categoryColorMap['Uncategorized'])}
-              >
-                {transaction.category}
-              </Badge>
-            </TableCell>
-            <TableCell
-              className={cn(
-                'text-right font-semibold',
-                transaction.type === 'income' ? 'text-green-600' : 'text-slate-800'
-              )}
-            >
-              {formatCurrency(transaction.amount)}
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7"
-                  onClick={() => handleCategorize(transaction)}
-                  disabled={categorizingId === transaction.id || roundUpId === transaction.id}
-                  aria-label="Categorize with AI"
-                >
-                  {categorizingId === transaction.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4 text-muted-foreground" />}
-                </Button>
-                {transaction.type === 'expense' && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7"
-                    onClick={() => handleRoundUp(transaction)}
-                    disabled={roundUpId === transaction.id || categorizingId === transaction.id}
-                    aria-label="Round-up transaction"
-                  >
-                    {roundUpId === transaction.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4 text-muted-foreground" />}
-                  </Button>
-                )}
+    <section className="glass rounded-xl p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search…"
+                 className="w-64 rounded bg-transparent px-2 py-1 text-sm ring-1 ring-white/10"/>
+          <ExportCsvButton rows={filtered} />
+        </div>
+        {sel.size>0 && (
+          <button onClick={()=>setDrawer(true)} className="rounded bg-primary px-3 py-2 text-primary-fg text-sm">Bulk Categorize ({sel.size})</button>
+        )}
+      </div>
+
+      <div className="sticky top-0 z-10 grid grid-cols-[1.5rem_8rem_1fr_10rem_8rem] gap-2 rounded bg-black/10 p-2 text-xs font-medium backdrop-blur dark:bg-white/10">
+        <div></div><div>Date</div><div>Merchant</div><div>Category</div><div>Amount</div>
+      </div>
+      <div ref={parentRef} className="h-[420px] overflow-auto">
+        <div style={{ height: virt.getTotalSize(), position: 'relative' }}>
+          {virt.getVirtualItems().map(v => {
+            const r = filtered[v.index];
+            return (
+              <div key={r.id} style={{ position:'absolute', top:0, left:0, width:'100%', transform:`translateY(${v.start}px)` }}
+                   className="grid grid-cols-[1.5rem_8rem_1fr_10rem_8rem] items-center gap-2 border-b border-white/5 px-2 py-2 text-sm">
+                <input type="checkbox" checked={sel.has(r.id)} onChange={()=>toggle(r.id)} />
+                <div className="tabular-nums text-muted">{new Date(r.date).toLocaleDateString()}</div>
+                <div className="truncate">{r.merchant}</div>
+                <div>
+                  <select className="w-full rounded bg-transparent px-2 py-1 ring-1 ring-white/10"
+                          value={r.category||'Uncategorized'}
+                          onChange={e=>applyCategories([{ id: r.id, category: e.target.value }])}>
+                    {['Income','Groceries','Transport','Dining','Housing','Utilities','Health','Subscriptions','Shopping','Entertainment','Education','Fees','Transfers','Savings','Investments','Gifts','Travel','Insurance','Taxes','Uncategorized']
+                      .map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className={`text-right ${r.amount<0? 'text-red-400':'text-green-400'}`}>{fmtCurrency(r.amount)}</div>
               </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+            );
+          })}
+        </div>
+      </div>
+
+      <BulkCategorizeDrawer open={drawer} onOpenChange={setDrawer} items={selectedRows} onApply={applyCategories} />
+    </section>
   );
 }

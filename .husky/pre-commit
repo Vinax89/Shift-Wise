@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Robust PNPM runner (works in Cloud Workstations / Nix with Corepack)
+RUN="./scripts/pm.sh"
+
+# Fast-fail on script errors, propagate failures from subcommands
+set -euo pipefail
+
+# Show versions to help debugging flaky hook envs
+$RUN -v || true
+node -v || true
+
+# Run what we can. If a script doesn't exist, skip it (CI still enforces).
+HAS_LINT=1
+HAS_TYPECHECK=1
+HAS_TEST=1
+
+$RUN run -s lint       || HAS_LINT=$?
+$RUN run -s typecheck  || HAS_TYPECHECK=$?
+$RUN run -s test --if-present || HAS_TEST=$?
+
+# If any existing script failed (exit code 1), block commit.
+if [ "$HAS_LINT" -eq 1 ] || [ "$HAS_TYPECHECK" -eq 1 ] || [ "$HAS_TEST" -eq 1 ]; then
+  echo "❌ Pre-commit checks failed. Fix issues or bypass with HUSKY=0 git commit -n" >&2
+  exit 1
+fi
+
+exit 0

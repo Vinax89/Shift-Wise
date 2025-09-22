@@ -2,29 +2,37 @@
 import * as React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-export type AgendaRow = { id: string; date: string; title: string; meta?: string; amount?: number };
-export default function AgendaVirtual({ rows, onOpen }: { rows: AgendaRow[]; onOpen: (id: string) => void }) {
+type Item = { id: string; date: string; title: string; meta?: string };
+const demo: Item[] = Array.from({ length: 200 }, (_, i) => ({
+  id: `a${i}`,
+  date: new Date(Date.now() + i*86400000).toISOString().slice(0,10),
+  title: i % 5 ? 'Shift' : 'Bill Due',
+  meta: i % 5 ? '09:00–17:00' : '$12.00',
+}));
+
+export default function AgendaVirtual({ items = demo }: { items?: Item[] }) {
   const parentRef = React.useRef<HTMLDivElement>(null);
-  const v = useVirtualizer({ count: rows.length, getScrollElement: () => parentRef.current, estimateSize: () => 56, overscan: 10 });
+  const virt = useVirtualizer({ count: items.length, getScrollElement: () => parentRef.current, estimateSize: () => 56, overscan: 8 });
   return (
-    <div ref={parentRef} className="h-[60vh] overflow-auto [content-visibility:auto] [contain-intrinsic-size:56px] rounded-2xl border border-border bg-card">
-      <div style={{ height: v.getTotalSize() }} className="relative">
-        {v.getVirtualItems().map(item => {
-          const row = rows[item.index];
-          return (
-            <div key={item.key} className="absolute left-0 right-0" style={{ transform: `translateY(${item.start}px)`, height: item.size }}>
-              <button onClick={()=>onOpen(row.id)} className="flex w-full items-center justify-between px-3 py-3 text-left hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring">
+    <section className="glass rounded-xl p-3">
+      <h2 className="mb-2 text-base font-semibold">Agenda</h2>
+      <div ref={parentRef} className="h-[360px] overflow-auto">
+        <div style={{ height: virt.getTotalSize(), position:'relative' }}>
+          {virt.getVirtualItems().map(v => {
+            const item = items[v.index];
+            return (
+              <div key={item.id} style={{ position:'absolute', top:0, left:0, right:0, transform:`translateY(${v.start}px)` }}
+                   className="flex items-center justify-between border-b border-white/5 px-2 py-2">
                 <div>
-                  <div className="text-sm font-medium text-card-fg">{row.title}</div>
-                  <div className="text-xs text-muted-fg">{row.date} {row.meta ? `• ${row.meta}` : ''}</div>
+                  <div className="text-sm">{item.title}</div>
+                  <div className="text-xs text-muted">{item.meta}</div>
                 </div>
-                {row.amount!==undefined && <div className={`text-sm font-semibold ${row.amount<0?'text-danger':'text-success'}`}>{fmt(row.amount)}</div>}
-              </button>
-            </div>
-          );
-        })}
+                <div className="text-xs text-muted tabular-nums">{new Date(item.date).toLocaleDateString()}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
-function fmt(n:number){ return new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n); }

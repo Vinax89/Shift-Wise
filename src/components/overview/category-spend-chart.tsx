@@ -1,103 +1,17 @@
+
 'use client';
+import * as React from 'react';
+import { SmartBarChartPro } from '@/components/charts/ChartKitPro';
+import { GlassCard } from '../glass/GlassCard';
+import { fmtCurrency } from '@/lib/format/number';
 
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from '@/components/ui/chart';
-import { Pie, PieChart, Cell } from 'recharts';
-import { transactions } from '@/lib/data';
-import { useMemo, useState, useEffect } from 'react';
-import { Skeleton } from '../ui/skeleton';
-
-export function CategorySpendChart() {
-  const [chartColors, setChartColors] = useState<string[]>([]);
-   const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-    const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-    const color = (v: string) => `hsl(${css(v)})`;
-
-    setChartColors([
-      color('--chart-1'),
-      color('--chart-2'),
-      color('--chart-3'),
-      color('--chart-4'),
-      color('--chart-5'),
-    ]);
-  }, []);
-
-
-  const chartData = useMemo(() => {
-    const categoryTotals = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((acc, t) => {
-        const category = t.category || 'Uncategorized';
-        const amount = Math.abs(t.amount);
-        if (!acc[category]) {
-          acc[category] = 0;
-        }
-        acc[category] += amount;
-        return acc;
-      }, {} as { [key: string]: number });
-
-    return Object.entries(categoryTotals).map(([category, total]) => ({
-      name: category,
-      value: total,
-    }));
-  }, []);
-  
-  const chartConfig = useMemo(() => {
-    if (!isClient) return {};
-    return chartData.reduce((acc, data, index) => {
-      acc[data.name] = {
-        label: data.name,
-        color: chartColors[index % chartColors.length],
-      };
-      return acc;
-    }, {} as any);
-  }, [chartData, isClient, chartColors]);
-
-  if (!isClient) {
-      return (
-        <div>
-            <div className="text-sm text-muted-foreground mb-2">Spending by Category</div>
-            <Skeleton className="w-full h-80" />
-        </div>
-      );
-  }
-
+export type Row = { category: string; spent: number };
+const demo: Row[] = [ {category:'Groceries',spent:420},{category:'Dining',spent:180},{category:'Transport',spent:140},{category:'Utilities',spent:95},{category:'Subscriptions',spent:62} ];
+export default function CategorySpendChart({ rows=demo }: { rows?: Row[] }){
   return (
-    <>
-    <div className="text-sm text-muted-foreground mb-2">Spending by Category</div>
-    <div className="w-full h-80">
-      <ChartContainer
-        config={chartConfig}
-        className="mx-auto aspect-square h-full"
-      >
-        <PieChart>
-          <ChartTooltip
-            cursor={false}
-            content={<ChartTooltipContent nameKey="value" hideLabel />}
-          />
-          <Pie data={chartData} dataKey="value" nameKey="name" innerRadius="60%">
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={chartColors[index % chartColors.length]}
-              />
-            ))}
-          </Pie>
-          <ChartLegend
-            content={<ChartLegendContent nameKey="name" />}
-            className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
-          />
-        </PieChart>
-      </ChartContainer>
-    </div>
-    </>
+    <GlassCard title="Spending by Category">
+      <SmartBarChartPro data={rows} xKey={'category'} yKey={'spent'} height={280}
+        yFormatter={(n)=> fmtCurrency(n, 'USD')} />
+    </GlassCard>
   );
 }

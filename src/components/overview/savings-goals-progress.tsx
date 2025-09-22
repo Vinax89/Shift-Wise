@@ -1,35 +1,28 @@
-import { Progress } from '@/components/ui/progress';
-import { goals } from '@/lib/data';
-import { formatCurrency } from '@/lib/utils';
-import { differenceInDays, format } from 'date-fns';
+'use client';
+import * as React from 'react';
+import { fmtCurrency } from '@/lib/format/number';
 
-export function SavingsGoalsProgress() {
+export type Goal = { id: string; name: string; target: number; saved: number };
+export default function SavingsGoalsProgress({ goals = [] as Goal[], currency='USD' }) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {goals.map((goal) => {
-        const progress = (goal.currentAmount / goal.targetAmount) * 100;
-        const daysLeft = differenceInDays(new Date(goal.deadline), new Date());
-
-        return (
-          <div key={goal.id} className="space-y-3">
-            <div className="flex justify-between items-baseline">
-              <h4 className="font-medium">{goal.name}</h4>
-              <span className="text-sm text-muted-foreground">
-                {daysLeft > 0 ? `${daysLeft} days left` : 'Deadline passed'}
-              </span>
-            </div>
-            <Progress value={progress} />
-            <div className="flex justify-between items-baseline">
-              <span className="text-sm text-muted-foreground">
-                {formatCurrency(goal.currentAmount)}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                of {formatCurrency(goal.targetAmount)}
-              </span>
-            </div>
-          </div>
-        );
-      })}
+    <div className="glass rounded-xl p-3">
+      <h3 className="mb-2 text-base font-semibold text-base">Goals</h3>
+      <ul className="space-y-3">
+        {goals.slice(0,4).map(g => {
+          const pct = Math.min(100, Math.round((g.saved / Math.max(1,g.target)) * 100));
+          return (
+            <li key={g.id} className="rounded-lg bg-black/5 p-2 dark:bg-white/5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-base">{g.name}</span>
+                <span className="text-muted">{fmtCurrency(g.saved, currency)} / {fmtCurrency(g.target, currency)}</span>
+              </div>
+              <div className="mt-1 h-2 w-full overflow-hidden rounded bg-white/10">
+                <div className="h-full rounded bg-[var(--ch-1)]" style={{ width: `${pct}%` }} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

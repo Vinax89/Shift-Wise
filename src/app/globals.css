@@ -38,6 +38,7 @@
   --glass-highlight: hsl(var(--fg) / 0.06);
   --glass-shadow: 240 10% 20%;
   --glass-noise: rgba(255,255,255,0.05);
+  --tooltip-bg: rgba(0,0,0,.72);
 }
 
 .dark {
@@ -74,6 +75,7 @@
   --glass-highlight: hsl(var(--fg) / 0.08);
   --glass-shadow: 240 10% 5%;
   --glass-noise: rgba(255,255,255,0.03);
+  --tooltip-bg: rgba(20,20,24,.72);
 }
 
 /* High-contrast theme favors near-AAA text contrast */
@@ -239,14 +241,49 @@
 .kbd { background:hsl(var(--muted)); padding:.125rem .375rem; border-radius:.375rem; border:1px solid hsl(var(--border)); font-size:.75rem }
 
 :root {
-  --chart-bg: var(--card);
-  --chart-fg: var(--card-fg);
-  --chart-grid: 220 13% 88%;
-  --chart-axis: 220 10% 35%;
-  --chart-axis-weak: 220 10% 85%;
-  --chart-1: 221 83% 53%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 262 83% 58%;
-  --chart-4: 38 92% 50%;
-  --chart-5: 0 72% 51%;
+  --motion-fast: 120ms;
+  --motion-med: 220ms;
+  --motion-slow: 360ms;
 }
+.motion-quiet * { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+.motion-smooth * { transition-duration: var(--motion-med); }
+
+/******** GPU & glass safety ********/
+.gpu { will-change: transform, opacity; transform: translateZ(0); }
+.glass { background: color-mix(in oklab, hsl(var(--bg)) 80%, transparent); backdrop-filter: blur(8px); }
+/* Avoid heavier blur on hover; only light transform */
+.card { transition: transform var(--motion-med); }
+.card:hover { transform: translateY(-2px) scale(1.01); }
+
+/* text & surface */
+:root {
+  --bg: #0b0b10;
+  --surface: rgba(255,255,255,0.04);
+  --text: #e9e9ef;
+  --muted: #9aa0a6;
+  /* chart palette */
+  --ch-1: #7cc6ff; /* inflow */
+  --ch-2: #ff9aa2; /* outflow */
+  --ch-3: #ffd166; /* accent */
+  --ch-grid: rgba(255,255,255,0.08);
+}
+
+:root.light {
+  --bg: #ffffff;
+  --surface: rgba(0,0,0,0.04);
+  --text: #111827;
+  --muted: #4b5563;
+  --ch-1: #2563eb;
+  --ch-2: #ef4444;
+  --ch-3: #f59e0b;
+  --ch-grid: rgba(0,0,0,0.06);
+}
+
+.glass { backdrop-filter: saturate(160%) blur(16px); background: var(--surface); }
+.text-base { color: var(--text); }
+.text-muted { color: var(--muted); }
+
+/* Recharts defaults alignment */
+.recharts-text { fill: var(--muted); }
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line { stroke: var(--ch-grid); }

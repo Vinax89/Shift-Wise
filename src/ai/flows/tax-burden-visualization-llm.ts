@@ -9,6 +9,35 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { generate } from 'genkit';
+
+export type TaxInput = {
+  zip: string;
+  filingStatus: 'single'|'married'|'hoh';
+  grossAnnual: number;
+  state: string;
+  locality?: string;
+};
+
+export type TaxOutput = {
+  federal: number; state: number; local: number;
+  employer: { fica: number; futa?: number };
+  notes?: string;
+};
+
+export async function llmSummarizeTax(input: TaxInput): Promise<TaxOutput> {
+  // The LLM is for **explanatory text** only; real math should come from your rules engine.
+  const sys = `You summarize tax components. You must output strict JSON with keys: federal, state, local, employer:{fica,futa?}, notes. No prose.`;
+  const { text, outputText } = await generate({
+    model: 'googleai/gemini-1.5-flash',
+    prompt: JSON.stringify(input),
+    config: {
+        custom: {role: 'system', content: sys}
+    },
+    output: { format: 'json' },
+  } as any);
+  try { return JSON.parse(outputText ?? text ?? '{}'); } catch { return { federal: 0, state: 0, local: 0, employer:{fica:0}, notes:'parse-fallback' }; }
+}
 
 const TaxBurdenVisualizationInputSchema = z.object({
   zipCode: z
@@ -36,59 +65,17 @@ export type TaxBurdenVisualizationOutput = z.infer<
 export async function taxBurdenVisualization(
   input: TaxBurdenVisualizationInput
 ): Promise<TaxBurdenVisualizationOutput> {
-  return taxBurdenVisualizationFlow(input);
+    const taxInput: TaxInput = {
+        zip: input.zipCode,
+        filingStatus: 'single', // placeholder
+        grossAnnual: 50000, // placeholder
+        state: 'CA', // placeholder
+    };
+    const result = await llmSummarizeTax(taxInput);
+    return {
+        federalTax: result.federal,
+        stateTax: result.state,
+        localTax: result.local,
+        taxBurdenExplanation: result.notes || 'Taxes calculated based on provided information.'
+    };
 }
-
-const getTaxRules = ai.defineTool({
-  name: 'getTaxRules',
-  description: 'Retrieves federal, state, and local tax rules for a given ZIP code.',
-  inputSchema: z.object({
-    zipCode: z
-      .string()
-      .length(5)
-      .regex(/^\d+$/)
-      .describe('The ZIP code to retrieve tax rules for.'),
-  }),
-  outputSchema: z.string().describe('The tax rules for the given ZIP code.'),
-},
-async input => {
-    // TODO: Add actual implementation here to fetch tax rules for the given zip code
-    // For now, return a dummy string
-    return `Tax rules for zip code ${input.zipCode}: Federal: 24%, State: 6%, Local: 2%`;
-  }
-);
-
-const prompt = ai.definePrompt({
-  name: 'taxBurdenVisualizationPrompt',
-  tools: [getTaxRules],
-  input: {schema: TaxBurdenVisualizationInputSchema},
-  output: {schema: TaxBurdenVisualizationOutputSchema},
-  prompt: `You are a tax expert who visualizes tax burdens for users based on their ZIP code.
-
-  First, call the getTaxRules tool to get the tax rules for the given ZIP code.
-  Then, calculate the federal, state, and local taxes based on these rules.
-  Finally, create a tax burden explanation for the user.
-
-  ZIP Code: {{{zipCode}}}
-
-  The tax rules: {{await getTaxRules zipCode=zipCode}}
-
-  Based on the tax rules and ZIP code, please provide the following information:
-  - federalTax: The calculated federal tax amount.
-  - stateTax: The calculated state tax amount.
-  - localTax: The calculated local tax amount.
-  - taxBurdenExplanation: An explanation of how the tax burden was calculated.
-  `,
-});
-
-const taxBurdenVisualizationFlow = ai.defineFlow(
-  {
-    name: 'taxBurdenVisualizationFlow',
-    inputSchema: TaxBurdenVisualizationInputSchema,
-    outputSchema: TaxBurdenVisualizationOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
