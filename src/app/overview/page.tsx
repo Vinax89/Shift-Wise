@@ -2,7 +2,7 @@ import { getHomeTrend } from '@/lib/data/home';
 import dynamic from 'next/dynamic';
 import Visible from '@/components/islands/Visible';
 
-const ThemedLineChart = dynamic(() => import('@/components/charts/ThemedLineChart'), { ssr: false, loading: () => <div className="h-40 animate-pulse rounded"/> });
+const LineChartIsland = dynamic(() => import('@/components/charts/LineChartIsland'), { ssr: false, loading: () => <div className="h-40 animate-pulse rounded"/> });
 
 export default async function HomePage() {
   const trend = await getHomeTrend();
@@ -28,8 +28,8 @@ export default async function HomePage() {
         </div>
         <div className="mt-4">
           <Visible height={280}>
-            <ThemedLineChart data={trend} xKey="month" yKeys={["inflow","outflow"]} height={280}
-              yFormatter={(n)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
+            <LineChartIsland data={trend} xKey="month" yKeys={["inflow","outflow"]} height={280}
+              yFormatter={(n: number)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
           </Visible>
         </div>
       </section>
