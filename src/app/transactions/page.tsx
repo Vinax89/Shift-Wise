@@ -1,8 +1,6 @@
 import { getTransactions } from '@/lib/data/transactions';
 import dynamic from 'next/dynamic';
 import { TransactionRow } from '@/components/transactions/TransactionRow';
-import { ImportTransactionsDialog } from '@/components/transactions/import-transactions-dialog';
-import { ScanReceiptDialog } from '@/components/transactions/scan-receipt-dialog';
 
 const VirtualList = dynamic(() => import('@/components/transactions/VirtualList').then(m => m.VirtualList), { ssr: false });
 
