@@ -1,0 +1,10 @@
+{
+  "name": "functions",
+  "engines": { "node": ">=20" },
+  "type": "module",
+  "dependencies": {
+    "firebase-admin": "^12",
+    "firebase-functions": "^5",
+    "rrule": "^2.8.1"
+  }
+}

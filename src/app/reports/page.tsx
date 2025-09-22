@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
 import { GlassCard } from '@/components/glass/GlassCard';
-import Visible from '@/components/islands/Visible';
+import ChartHost from '@/components/charts/ChartHost.client';
 
 const ThemedAreaChart = dynamic(() => import('@/components/charts/ThemedAreaChart'), { ssr:false, loading: () => <div className="h-40 animate-pulse rounded"/> });
 
@@ -15,10 +15,10 @@ export default async function ReportsPage() {
   return (
     <main className="mx-auto max-w-6xl p-4 space-y-4">
       <GlassCard title="Net Cashflow Trend">
-        <Visible height={280}>
+        <ChartHost height={280}>
           <ThemedAreaChart data={trend} xKey="m" yKey="net"
             yFormatOptions={{style:'currency',currency:'USD',maximumFractionDigits:0}} />
-        </Visible>
+        </ChartHost>
       </GlassCard>
     </main>
   );

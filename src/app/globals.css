@@ -237,3 +237,16 @@
 [data-glass="off"] .glass { -webkit-backdrop-filter:none; backdrop-filter:none; background:hsl(var(--card)); box-shadow:0 1px 0 hsl(var(--shadow)/.06) inset, 0 8px 24px hsl(var(--shadow)/.1); }
 
 .kbd { background:hsl(var(--muted)); padding:.125rem .375rem; border-radius:.375rem; border:1px solid hsl(var(--border)); font-size:.75rem }
+
+:root {
+  --chart-bg: var(--card);
+  --chart-fg: var(--card-fg);
+  --chart-grid: 220 13% 88%;
+  --chart-axis: 220 10% 35%;
+  --chart-axis-weak: 220 10% 85%;
+  --chart-1: 221 83% 53%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 262 83% 58%;
+  --chart-4: 38 92% 50%;
+  --chart-5: 0 72% 51%;
+}

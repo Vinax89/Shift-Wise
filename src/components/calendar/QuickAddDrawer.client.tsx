@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { computeShiftPay } from '@/lib/calendar/shiftPay';
 import { createEvent, createRecurring } from '@/lib/persistence/calendar';
 import type { Recurrence } from '@/lib/calendar/types';
+import { RRule, Frequency } from 'rrule';
 
 const ShiftSchema = z.object({
   date: z.string(),
@@ -30,6 +31,8 @@ export default function QuickAddDrawer({ open, onOpenChange, initialDate }: { op
 
   const shift = useForm({ resolver: zodResolver(ShiftSchema), defaultValues: { date: initialDate, start: '07:00', end: '15:00', hourlyRate: 25, incentive: 0, premiumPct: 0 } });
   const bill = useForm({ resolver: zodResolver(BillSchema), defaultValues: { date: initialDate, name: '', amount: 100, recurring: false, freq: 'once' } });
+  const [sub, setSub] = React.useState({ name: '', amount: 9.99, start: initialDate, freq: 'MONTHLY' as keyof typeof Frequency, interval: 1, count: 6 });
+
 
   async function submitShift(v: z.infer<typeof ShiftSchema>) {
     const [sh, sm] = v.start.split(':').map(Number);
@@ -65,7 +68,7 @@ export default function QuickAddDrawer({ open, onOpenChange, initialDate }: { op
           <div className="mb-3 flex gap-2 text-sm">
             <button onClick={()=>setTab('shift')} className={`rounded px-2 py-1 ${tab==='shift'?'bg-primary text-primary-fg':'bg-muted text-muted-fg'}`}>Shift</button>
             <button onClick={()=>setTab('bill')} className={`rounded px-2 py-1 ${tab==='bill'?'bg-primary text-primary-fg':'bg-muted text-muted-fg'}`}>Bill</button>
-            <button onClick={()=>setTab('subscription')} disabled className="rounded px-2 py-1 bg-muted text-muted-fg opacity-60">Subscription (soon)</button>
+            <button onClick={()=>setTab('subscription')} className={`rounded px-2 py-1 ${tab==='subscription'?'bg-primary text-primary-fg':'bg-muted text-muted-fg'}`}>Subscription</button>
           </div>
 
           {tab==='shift' && (
@@ -108,6 +111,35 @@ export default function QuickAddDrawer({ open, onOpenChange, initialDate }: { op
               <button className="rounded bg-primary px-3 py-2 text-primary-fg">Add</button>
             </form>
           )}
+          
+          {tab==='subscription' && (
+            <form onSubmit={async (e)=>{e.preventDefault();
+              const rule = new RRule({
+                freq: Frequency[sub.freq],
+                dtstart: new Date(sub.start + 'T00:00:00Z'),
+                interval: sub.interval,
+                count: sub.count,
+              });
+              // store a recurrence doc and let Cloud Function materialize
+              await createEvent({ kind:'subscription', date: sub.start, title: sub.name, amount: -Math.abs(sub.amount), meta: { rrule: rule.toString() } });
+              onOpenChange(false);
+            }} className="grid gap-3">
+              <label className="grid gap-1 text-sm">Name<input value={sub.name} onChange={e=>setSub(s=>({...s,name:e.target.value}))} className="rounded border border-border bg-card px-2 py-1"/></label>
+              <div className="grid grid-cols-3 gap-2">
+                <label className="grid gap-1 text-sm">Start<input type="date" value={sub.start} onChange={e=>setSub(s=>({...s,start:e.target.value}))} className="rounded border border-border bg-card px-2 py-1"/></label>
+                <label className="grid gap-1 text-sm">Amount<input inputMode="decimal" value={sub.amount} onChange={e=>setSub(s=>({...s,amount:Number(e.target.value)}))} className="rounded border border-border bg-card px-2 py-1"/></label>
+                <label className="grid gap-1 text-sm">Freq<select value={sub.freq} onChange={e=>setSub(s=>({...s,freq:e.target.value as any}))} className="rounded border border-border bg-card px-2 py-1">
+                  <option>DAILY</option><option>WEEKLY</option><option>MONTHLY</option><option>YEARLY</option>
+                </select></label>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1 text-sm">Interval<input inputMode="numeric" value={sub.interval} onChange={e=>setSub(s=>({...s,interval:Number(e.target.value)}))} className="rounded border border-border bg-card px-2 py-1"/></label>
+                <label className="grid gap-1 text-sm">Occurrences<input inputMode="numeric" value={sub.count} onChange={e=>setSub(s=>({...s,count:Number(e.target.value)}))} className="rounded border border-border bg-card px-2 py-1"/></label>
+              </div>
+              <button className="rounded bg-primary px-3 py-2 text-primary-fg">Create Subscription</button>
+            </form>
+          )}
+
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
