@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${nunito.variable}`} suppressHydrationWarning>
       <head />
       <body
-        className={`font-body antialiased min-h-screen bg-background text-foreground`}
+        className={`font-sans antialiased min-h-screen bg-background text-foreground`}
         data-density="comfy"
       >
         <ThemeProvider>

@@ -18,7 +18,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui'],
-        display: ['var(--font-nunito)','var(--font-inter)'],
+        display: ['var(--font-nunito)', 'var(--font-inter)'],
         body: ['var(--font-body)', 'sans-serif'],
         headline: ['var(--font-headline)', 'sans-serif'],
         code: ['monospace'],

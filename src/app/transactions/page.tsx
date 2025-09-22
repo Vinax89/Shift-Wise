@@ -9,26 +9,17 @@ const VirtualList = dynamic(() => import('@/components/transactions/VirtualList'
 export default async function TransactionsPage() {
   const txs = await getTransactions(5000);
   return (
-    <div className="space-y-6">
-       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">Transactions</h1>
-          <p className="text-muted-foreground">
-            View, manage, and categorize your financial transactions.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <ImportTransactionsDialog />
-          <ScanReceiptDialog />
-        </div>
-      </div>
+    <main className="mx-auto max-w-6xl p-4">
       <section className="glass rounded-2xl p-4">
+        <header className="mb-3 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Transactions</h1>
+        </header>
         {txs.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">No transactions yet.</div>
         ) : (
           <VirtualList rows={txs.map((t) => <TransactionRow key={t.id} t={t} />)} />
         )}
       </section>
-    </div>
+    </main>
   );
 }
