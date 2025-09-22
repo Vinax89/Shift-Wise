@@ -1,8 +1,5 @@
 import { getTransactions } from '@/lib/data/transactions';
-import dynamic from 'next/dynamic';
-import { TransactionRow } from '@/components/transactions/TransactionRow';
-
-const VirtualList = dynamic(() => import('@/components/transactions/VirtualList').then(m => m.VirtualList), { ssr: false });
+import { TransactionsList } from '@/components/transactions/transactions-list';
 
 export default async function TransactionsPage() {
   const txs = await getTransactions(5000);
@@ -15,7 +12,7 @@ export default async function TransactionsPage() {
         {txs.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">No transactions yet.</div>
         ) : (
-          <VirtualList rows={txs.map((t) => <TransactionRow key={t.id} t={t} />)} />
+          <TransactionsList transactions={txs} />
         )}
       </section>
     </main>
