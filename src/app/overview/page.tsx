@@ -27,7 +27,7 @@ export default async function HomePage() {
         <div className="mt-4">
           <Visible height={280}>
             <LineChartIsland data={trend} xKey="month" yKeys={["inflow","outflow"]} height={280}
-              yFormatter={(n: number)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
+              locale={undefined} yFormatOptions={{ style:'currency', currency:'USD', maximumFractionDigits:0 }} />
           </Visible>
         </div>
       </section>

@@ -32,7 +32,7 @@ export default async function BudgetPage() {
       <GlassCard title="Budget Overview">
         <Visible height={280}>
           <ThemedBarChart data={data} xKey="cat" yKeys={["spent","budget"]}
-            yFormatter={(n)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
+            yFormatOptions={{style:'currency',currency:'USD',maximumFractionDigits:0}} />
         </Visible>
       </GlassCard>
       <section className="glass rounded-2xl p-4">

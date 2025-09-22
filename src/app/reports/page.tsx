@@ -17,7 +17,7 @@ export default async function ReportsPage() {
       <GlassCard title="Net Cashflow Trend">
         <Visible height={280}>
           <ThemedAreaChart data={trend} xKey="m" yKey="net"
-            yFormatter={(n)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
+            yFormatOptions={{style:'currency',currency:'USD',maximumFractionDigits:0}} />
         </Visible>
       </GlassCard>
     </main>
