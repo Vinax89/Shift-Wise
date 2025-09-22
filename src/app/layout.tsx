@@ -24,6 +24,7 @@ export default function RootLayout({
       <body
         className={`font-sans antialiased min-h-screen bg-background text-foreground`}
         data-density="comfy"
+        data-glass="auto"
       >
         <ThemeProvider>
           <RouteTransitions />

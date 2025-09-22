@@ -224,3 +224,16 @@
 }
 /* Card content spacing helpers */
 .card-pad { padding: clamp(0.75rem, 1.2vw, 1rem); }
+
+/* Reduced transparency: auto-disable glass if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.hc) [data-glass="auto"] .glass {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    background: hsl(var(--card));
+    box-shadow: 0 1px 0 hsl(var(--shadow) / 0.06) inset, 0 8px 24px hsl(var(--shadow) / 0.1);
+  }
+}
+/* Manual override (Appearance page sets data-glass="on|off|auto" on <html>) */
+[data-glass="off"] .glass { -webkit-backdrop-filter:none; backdrop-filter:none; background:hsl(var(--card)); box-shadow:0 1px 0 hsl(var(--shadow)/.06) inset, 0 8px 24px hsl(var(--shadow)/.1); }
+
+.kbd { background:hsl(var(--muted)); padding:.125rem .375rem; border-radius:.375rem; border:1px solid hsl(var(--border)); font-size:.75rem }

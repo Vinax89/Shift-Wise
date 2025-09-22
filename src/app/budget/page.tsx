@@ -3,6 +3,7 @@ import { GlassCard } from '@/components/glass/GlassCard';
 import Visible from '@/components/islands/Visible';
 
 const ThemedBarChart = dynamic(() => import('@/components/charts/ThemedBarChart'), { ssr:false, loading: () => <div className="h-40 animate-pulse rounded"/> });
+const BudgetGrid = dynamic(() => import('@/components/budget/BudgetGrid.client'), { ssr:false });
 
 async function getBudgetBars() {
   // TODO: replace with Firestore/Functions; fallback demo
@@ -14,8 +15,18 @@ async function getBudgetBars() {
   ];
 }
 
+async function getBudget(){
+  return [
+    { id:'b1', envelope:'Rent', planned:1800, spent:1800, remaining:0 },
+    { id:'b2', envelope:'Groceries', planned:600, spent:520, remaining:80 },
+    { id:'b3', envelope:'Transport', planned:250, spent:210, remaining:40 },
+    { id:'b4', envelope:'Dining', planned:300, spent:320, remaining:-20 },
+  ];
+}
+
 export default async function BudgetPage() {
   const data = await getBudgetBars();
+  const rows = await getBudget();
   return (
     <main className="mx-auto max-w-6xl p-4 space-y-4">
       <GlassCard title="Budget Overview">
@@ -24,7 +35,12 @@ export default async function BudgetPage() {
             yFormatter={(n)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
         </Visible>
       </GlassCard>
-      {/* TODO: add editable grid below (separate island) */}
+      <section className="glass rounded-2xl p-4">
+        <header className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold">Planner</h2>
+        </header>
+        <BudgetGrid rows={rows} onChange={(next)=>{/* server action save */}} />
+      </section>
     </main>
   );
 }
