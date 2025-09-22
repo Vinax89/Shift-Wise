@@ -1,38 +1,44 @@
 import { getHomeTrend } from '@/lib/data/home';
-import dynamic from 'next/dynamic';
-import Visible from '@/components/islands/Visible';
+import { CashFlowTrend } from '@/components/overview/cash-flow-trend';
+import { RecentTransactions } from '@/components/overview/recent-transactions';
+import { CategorySpendChart } from '@/components/overview/category-spend-chart';
+import { IncomeViability } from '@/components/overview/income-viability';
+import { SavingsGoalsProgress } from '@/components/overview/savings-goals-progress';
 
-const ThemedLineChart = dynamic(() => import('@/components/charts/themed-line-chart'), { ssr: false, loading: () => <div className="h-40 animate-pulse rounded"/> });
-
-export default async function HomePage() {
+export default async function OverviewPage() {
   const trend = await getHomeTrend();
   return (
-    <main className="mx-auto max-w-6xl p-4 space-y-6">
-      <section className="glass rounded-2xl p-4">
-        <header className="mb-2 flex items-center justify-between">
-          <h1 className="text-xl font-semibold font-headline">Overview</h1>
-        </header>
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-3">
-            <div className="text-xs text-muted-foreground">Net This Month</div>
-            <div className="text-2xl font-semibold font-headline">${(trend.at(-1)?.inflow ?? 0) + (trend.at(-1)?.outflow ?? 0)}</div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-3">
-            <div className="text-xs text-muted-foreground">Inflow</div>
-            <div className="text-2xl font-semibold font-headline">${trend.at(-1)?.inflow ?? 0}</div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-3">
-            <div className="text-xs text-muted-foreground">Outflow</div>
-            <div className="text-2xl font-semibold font-headline">${Math.abs(trend.at(-1)?.outflow ?? 0)}</div>
+    <main className="space-y-6">
+      <IncomeViability />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="glass rounded-2xl p-4 h-full">
+             <CashFlowTrend data={trend} />
           </div>
         </div>
-        <div className="mt-4">
-          <Visible height={280}>
-            <ThemedLineChart data={trend} xKey="month" yKeys={["inflow","outflow"]} height={280}
-              yFormatter={(n)=> new Intl.NumberFormat(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)} />
-          </Visible>
+        <div className="lg:col-span-1">
+            <div className="glass rounded-2xl p-4 h-full">
+                <CategorySpendChart />
+            </div>
         </div>
-      </section>
+      </div>
+      
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="glass rounded-2xl p-4 h-full">
+             <h3 className="text-lg font-semibold font-headline mb-4">Savings Goals</h3>
+             <SavingsGoalsProgress />
+          </div>
+        </div>
+        <div className="lg:col-span-1">
+            <div className="glass rounded-2xl p-4 h-full">
+                <h3 className="text-lg font-semibold font-headline mb-4">Recent Transactions</h3>
+                <RecentTransactions />
+            </div>
+        </div>
+      </div>
+
     </main>
   );
 }

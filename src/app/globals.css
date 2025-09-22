@@ -214,3 +214,13 @@
         @apply scale-[0.98];
     }
 }
+
+/* Focus ring thickness tuned for HC */
+:root { --ring-w: 2px; }
+.hc { --ring-w: 3px; }
+:where(button, [role="button"], a, input, select, textarea):focus-visible {
+  outline: var(--ring-w) solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+/* Card content spacing helpers */
+.card-pad { padding: clamp(0.75rem, 1.2vw, 1rem); }

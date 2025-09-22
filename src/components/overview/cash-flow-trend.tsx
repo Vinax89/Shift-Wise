@@ -1,41 +1,25 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { transactions } from '@/lib/data';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
-import ThemedLineChart from '../charts/themed-line-chart';
 import { formatCurrency } from '@/lib/utils';
+import type { TrendPoint } from '@/lib/data/home';
 
-export function CashFlowTrend() {
-  const chartData = useMemo(() => {
-    const end = new Date();
-    const start = subDays(end, 29);
-    const dateInterval = eachDayOfInterval({ start, end });
+const ThemedLineChart = dynamic(() => import('../charts/themed-line-chart'), { 
+  ssr: false, 
+  loading: () => <div className="h-80 animate-pulse rounded-lg bg-muted" /> 
+});
 
-    const dailyData = dateInterval.map(date => {
-      const formattedDate = format(date, 'MMM d');
-      const dailyTransactions = transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-      
-      const income = dailyTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const expense = dailyTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-      return { date: formattedDate, income, expense };
-    });
-
-    return dailyData;
-  }, []);
+export function CashFlowTrend({ data }: { data: TrendPoint[] }) {
 
   return (
     <ThemedLineChart
-      data={chartData}
-      xKey="date"
-      yKeys={[{key: 'income', name: "Income"}, {key: 'expense', name: "Expenses"}]}
-      height={300}
+      data={data}
+      xKey="month"
+      yKeys={[{key: 'inflow', name: "Inflow"}, {key: 'outflow', name: "Outflow"}]}
+      height={320}
       yFormatter={(n) => {
           if (n > 1000) return `${formatCurrency(n/1000)}k`;
           return formatCurrency(n);

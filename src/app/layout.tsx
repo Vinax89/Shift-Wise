@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeProvider from '@/app/providers/theme-provider';
 import RouteTransitions from '@/app/providers/route-transitions';
 import { inter, nunito } from '@/app/fonts';
+import SiteHeader from '@/components/SiteHeader';
 
 export const metadata: Metadata = {
   title: 'ShiftWise - Smart Budgeting for Irregular Income',
@@ -26,6 +27,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <RouteTransitions />
+          <SiteHeader />
           <AppShell>{children}</AppShell>
           <Toaster />
         </ThemeProvider>
